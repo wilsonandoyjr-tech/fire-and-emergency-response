@@ -10,9 +10,29 @@ import { appRouter, incidentEvents } from "./routers";
 import { ensureFireSchema } from "./fireSchema";
 
 const app = express();
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const CLIENT_ORIGINS = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const isDev = process.env.NODE_ENV !== "production";
-const corsOrigin = isDev ? true : CLIENT_ORIGIN;
+const isAllowedOrigin = (origin?: string) => {
+  if (!origin) return true;
+  if (isDev) return true;
+  if (CLIENT_ORIGINS.includes(origin)) return true;
+
+  try {
+    const url = new URL(origin);
+    return url.hostname === "localhost" || url.hostname.endsWith(".onrender.com");
+  } catch {
+    return false;
+  }
+};
+const corsOrigin = (
+  origin: string | undefined,
+  callback: (error: Error | null, allow?: boolean) => void,
+) => {
+  callback(null, isAllowedOrigin(origin));
+};
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
@@ -31,6 +51,10 @@ app.use(
 );
 
 app.use(express.json({ limit: "10mb" }));
+
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true });
+});
 
 app.use("/", registerRouter);
 app.use("/", loginRouter);

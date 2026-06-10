@@ -1,7 +1,10 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { Capacitor } from "@capacitor/core";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const DEFAULT_API_BASE_URL = import.meta.env.PROD
+  ? "https://fire-and-emergency-response.onrender.com/api"
+  : "/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
 const ANDROID_API_BASE_URL =
   import.meta.env.VITE_ANDROID_API_BASE_URL || "http://10.0.2.2:5000/api";
 
