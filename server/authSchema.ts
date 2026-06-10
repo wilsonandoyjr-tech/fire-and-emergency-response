@@ -134,6 +134,7 @@ async function createAuthSchema() {
       ('Pulis Responder', 'pulis@example.com', 'pulis123', '0917-100-0003', 'pulis')
     ON CONFLICT ("email") DO UPDATE SET
       "full_name" = EXCLUDED."full_name",
+      "password" = EXCLUDED."password",
       "phone" = EXCLUDED."phone",
       "role" = EXCLUDED."role",
       "updatedAt" = now();
@@ -144,6 +145,7 @@ async function createAuthSchema() {
     VALUES ('System Admin', 'admin@example.com', 'admin123', '0917-100-0000', 'admin')
     ON CONFLICT ("email") DO UPDATE SET
       "full_name" = EXCLUDED."full_name",
+      "password" = EXCLUDED."password",
       "phone" = EXCLUDED."phone",
       "role" = EXCLUDED."role",
       "updatedAt" = now();

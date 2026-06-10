@@ -39,12 +39,17 @@ import IncidentDetails from "./pages/IncidentDetails";
 const adminRoles = ["admin"];
 const responderRoles = ["admin", "fire", "medical", "pulis"];
 
+function normalizeRole(role?: string) {
+  const normalizedRole = role ? String(role).trim().toLowerCase() : "";
+  return normalizedRole === "police" ? "pulis" : normalizedRole;
+}
+
 function getDashboardPath(role?: string) {
-  const normalizedRole = role ? String(role).toLowerCase() : "";
+  const normalizedRole = normalizeRole(role);
 
   if (normalizedRole === "fire") return "/fire/dashboard";
   if (normalizedRole === "medical") return "/medical/dashboard";
-  if (normalizedRole === "pulis") return "/pulis/dashboard";
+  if (normalizedRole === "pulis") return "/police/dashboard";
   if (adminRoles.includes(normalizedRole)) return "/admin/dashboard";
   return "/user/home";
 }
@@ -58,7 +63,7 @@ function LoadingScreen() {
 }
 
 function GuestRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth({ remote: false });
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -78,9 +83,9 @@ function GuestRoute({ component: Component }: { component: React.ComponentType }
 }
 
 function WelcomeRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth({ remote: false });
   const [, setLocation] = useLocation();
-  const role = user?.role ? String(user.role).toLowerCase() : "";
+  const role = normalizeRole(user?.role);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -101,9 +106,9 @@ function WelcomeRoute() {
 }
 
 function LoginRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth({ remote: false });
   const [, setLocation] = useLocation();
-  const role = user?.role ? String(user.role).toLowerCase() : "";
+  const role = normalizeRole(user?.role);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -130,7 +135,7 @@ function ProtectedRoute({ component: Component, requiredRole }: { component: Rea
     () => (Array.isArray(requiredRole) ? requiredRole : requiredRole ? [requiredRole] : []),
     [requiredRole],
   );
-  const userRole = user?.role ? String(user.role).toLowerCase() : "";
+  const userRole = normalizeRole(user?.role);
 
   useEffect(() => {
     if (loading) return;
@@ -163,7 +168,7 @@ function UserIncidentDetailsRoute() {
   const [, setLocation] = useLocation();
   const [match, params] = useRoute("/user/incidents/:id");
   const incidentId = params?.id;
-  const role = user?.role ? String(user.role).toLowerCase() : "";
+  const role = normalizeRole(user?.role);
 
   useEffect(() => {
     if (!match || loading || !incidentId) return;
@@ -176,7 +181,7 @@ function UserIncidentDetailsRoute() {
       return;
     }
     if (role === "pulis") {
-      setLocation(`/pulis/incidents/${incidentId}`, { replace: true });
+      setLocation(`/police/incidents/${incidentId}`, { replace: true });
       return;
     }
     if (role === "admin") {
@@ -197,7 +202,7 @@ function UserIncidentDetailsRoute() {
 }
 
 function Router() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth({ remote: false });
 
   if (loading) {
     return <LoadingScreen />;
@@ -251,6 +256,15 @@ function Router() {
         {() => <ProtectedRoute component={IncidentDetails} requiredRole="pulis" />}
       </Route>
       <Route path="/pulis/incidents/:id">
+        {() => <ProtectedRoute component={IncidentDetails} requiredRole="pulis" />}
+      </Route>
+      <Route path="/police/dashboard">
+        {() => <ProtectedRoute component={PulisDashboard} requiredRole="pulis" />}
+      </Route>
+      <Route path="/police/incidents/:id/review">
+        {() => <ProtectedRoute component={IncidentDetails} requiredRole="pulis" />}
+      </Route>
+      <Route path="/police/incidents/:id">
         {() => <ProtectedRoute component={IncidentDetails} requiredRole="pulis" />}
       </Route>
 
@@ -307,12 +321,17 @@ function Router() {
       <Route path="/user/incidents">
         {() => <UserIncidents />}
       </Route>
-      <Route path="/user/map">
-        {() => <UserLiveMap />}
-      </Route>
       <Route path="/user/report">
         {() => <ReportIncident />}
       </Route>
+      {/* Backwards-compat alias */}
+      <Route path="/user/add-report">
+        {() => <ReportIncident />}
+      </Route>
+      <Route path="/user/map">
+        {() => <UserLiveMap />}
+      </Route>
+
       <Route path="/user/contacts">
         {() => <EmergencyContacts />}
       </Route>
@@ -324,7 +343,7 @@ function Router() {
       {/* Default Routes */}
       <Route path="/">
         {() => {
-          const role = user?.role ? String(user.role).toLowerCase() : "";
+          const role = normalizeRole(user?.role);
           if (role === "fire") return <FireDashboard />;
           if (role === "medical") return <MedicalDashboard />;
           if (role === "pulis") return <PulisDashboard />;

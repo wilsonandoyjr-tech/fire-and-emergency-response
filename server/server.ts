@@ -4,10 +4,16 @@ import { createServer } from "http";
 import net from "net";
 import { Server } from "socket.io";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import cookieParser from "cookie-parser";
+
 import registerRouter from "./register";
 import loginRouter from "./login";
 import { appRouter, incidentEvents } from "./routers";
 import { ensureFireSchema } from "./fireSchema";
+import { getTokenFromRequest, verifyAuthToken } from "./authCookies";
+import { attachDebugAuthRoutes } from "./debugAuth";
+
+
 
 const app = express();
 const CLIENT_ORIGINS = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
@@ -50,11 +56,16 @@ app.use(
   }),
 );
 
+app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
+
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
+
+attachDebugAuthRoutes(app);
+
 
 app.use("/", registerRouter);
 app.use("/", loginRouter);
@@ -64,12 +75,30 @@ app.use(
   "/api/trpc",
   createExpressMiddleware({
     router: appRouter,
+    createContext: ({ req, res }) => {
+      const token = getTokenFromRequest(req);
+      const payload = token ? verifyAuthToken(token) : null;
+      return { user: payload, req, res };
+    },
   }) as RequestHandler,
 );
+
 
 const DEFAULT_PORT = 5000;
 const portValue = Number(process.env.PORT ?? "");
 const PORT = Number.isFinite(portValue) && portValue > 0 ? portValue : DEFAULT_PORT;
+
+httpServer.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(
+      `Port ${PORT} is already in use. Stop the other server process or set PORT to a different value in server/.env.`,
+    );
+    process.exit(1);
+  }
+
+  console.error("Server failed to start:", error);
+  process.exit(1);
+});
 
 const shutdown = () => {
   console.log("Shutting down server...");

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ensureAuthSchema } from "./authSchema";
 import pool from "./db";
-import { setCurrentUser } from "./routers";
+
 
 const router = Router();
 
@@ -40,12 +40,22 @@ router.get("/login", async (req, res) => {
       phone: result.rows[0].phone ?? "",
     };
 
-    setCurrentUser(user);
+    const { signAuthToken, setAuthCookie } = await import("./authCookies");
+    const token = signAuthToken({
+      userId: user.id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    });
+    setAuthCookie(res, req, token);
+
 
     return res.status(200).json({
       message: "Login successful",
       user,
     });
+
 
   } catch (error: any) {
     console.error("Login error:", error);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -47,9 +48,11 @@ const themeClasses: Record<
 };
 
 export function ResponderProfilePanel({ theme }: { theme: Theme }) {
-  const { user, refresh } = useAuth();
+  const { user, refresh, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const classes = themeClasses[theme];
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -88,6 +91,18 @@ export function ResponderProfilePanel({ theme }: { theme: Theme }) {
       toast.success("Profile saved");
     } catch (error: any) {
       toast.error(error?.message || "Failed to save profile");
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch {
+      // useAuth clears local auth state even if the backend is unavailable.
+    } finally {
+      setIsLoggingOut(false);
+      setLocation("/login", { replace: true });
     }
   };
 
@@ -136,6 +151,18 @@ export function ResponderProfilePanel({ theme }: { theme: Theme }) {
           {updateProfileMutation.isPending ? "Saving..." : "Save Profile"}
         </Button>
         {isSaved && <p className={`text-center text-sm font-medium ${classes.saved}`}>Profile saved.</p>}
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-xl font-bold text-white">Account Access</h3>
+        <Button
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="h-12 w-full rounded-2xl border border-red-500/30 bg-red-600/15 text-base font-semibold text-red-100 hover:bg-red-600/25"
+        >
+          <LogOut className="mr-2 h-5 w-5" />
+          {isLoggingOut ? "Logging out..." : "Log Out"}
+        </Button>
       </section>
     </section>
   );

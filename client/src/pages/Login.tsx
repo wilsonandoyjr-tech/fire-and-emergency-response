@@ -9,11 +9,20 @@ import { trpc } from "@/lib/trpc";
 
 type LoginRole = "admin" | "fire" | "medical" | "pulis" | "user";
 
+function normalizeLoginRole(role?: string): LoginRole {
+  const normalizedRole = String(role ?? "user").trim().toLowerCase();
+  if (normalizedRole === "police") return "pulis";
+  if (normalizedRole === "admin" || normalizedRole === "fire" || normalizedRole === "medical" || normalizedRole === "pulis") {
+    return normalizedRole;
+  }
+  return "user";
+}
+
 const dashboardByRole: Record<LoginRole, string> = {
   admin: "/admin/dashboard",
   fire: "/fire/dashboard",
   medical: "/medical/dashboard",
-  pulis: "/pulis/dashboard",
+  pulis: "/police/dashboard",
   user: "/user/home",
 };
 
@@ -38,15 +47,23 @@ export default function Login() {
 
     try {
       const url = getApiUrl(`/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: "include" });
 
-      const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
+      let data: any = null;
+      try {
+        // Backend might return non-JSON on proxy/CORS/network errors
+        data = await res.json();
+      } catch {
+        data = null;
       }
 
-      const role = String(data.user.role || "user").toLowerCase() as LoginRole;
+      if (!res.ok) {
+        const msg = data?.message || `Login failed (HTTP ${res.status})`;
+        throw new Error(msg);
+      }
+
+      const role = normalizeLoginRole(data.user.role);
       const loggedInUser = {
         ...data.user,
         role,
@@ -63,7 +80,11 @@ export default function Login() {
       utils.auth.me.setData(undefined, loggedInUser);
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error?.message || "Login failed — the backend may be unavailable.");
+      const message =
+        error instanceof TypeError
+          ? "Cannot reach the backend. Start the server with npm run dev in the server folder."
+          : error?.message || "Login failed. Please check your credentials and try again.";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

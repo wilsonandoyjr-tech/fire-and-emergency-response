@@ -9,6 +9,15 @@ import { trpc } from "@/lib/trpc";
 
 type AccountRole = "fire" | "medical" | "pulis" | "admin";
 
+function normalizeAccountRole(role?: string): AccountRole {
+  const normalizedRole = String(role ?? "fire").trim().toLowerCase();
+  if (normalizedRole === "police") return "pulis";
+  if (normalizedRole === "fire" || normalizedRole === "medical" || normalizedRole === "pulis" || normalizedRole === "admin") {
+    return normalizedRole;
+  }
+  return "fire";
+}
+
 const roleLabels: Record<AccountRole, string> = {
   fire: "Fire",
   medical: "Medical",
@@ -20,7 +29,7 @@ const dashboardByRole: Record<AccountRole, string> = {
   admin: "/admin/dashboard",
   fire: "/fire/dashboard",
   medical: "/medical/dashboard",
-  pulis: "/pulis/dashboard",
+  pulis: "/police/dashboard",
 };
 
 export default function SignUp() {
@@ -48,6 +57,8 @@ export default function SignUp() {
     try {
       const res = await fetch(getApiUrl("/register"), {
         method: "POST",
+        credentials: "include",
+
         headers: {
           "Content-Type": "application/json",
         },
@@ -59,17 +70,22 @@ export default function SignUp() {
         }),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to register");
+        throw new Error(data?.message || `Failed to register (HTTP ${res.status})`);
       }
 
       if (!data?.user) {
         throw new Error("Account created, but login data was missing");
       }
 
-      const userRole = String(data.user.role || role).toLowerCase() as AccountRole;
+      const userRole = normalizeAccountRole(data.user.role || role);
       const loggedInUser = {
         ...data.user,
         role: userRole,
@@ -86,7 +102,11 @@ export default function SignUp() {
       setLocation(dashboardByRole[userRole], { replace: true });
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error(error.message || "Failed to register");
+      const message =
+        error instanceof TypeError
+          ? "Cannot reach the backend. Start the server with npm run dev in the server folder."
+          : error?.message || "Failed to register";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

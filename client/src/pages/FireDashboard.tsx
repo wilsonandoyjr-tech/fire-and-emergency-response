@@ -203,7 +203,7 @@ export default function FireDashboard() {
 
   const handleLogout = async () => {
     await logout();
-    setLocation("/welcome");
+    setLocation("/login", { replace: true });
   };
 
   const handleCreateTeam = async (event: React.FormEvent) => {

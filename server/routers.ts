@@ -2,6 +2,9 @@ import { TRPCError, initTRPC } from "@trpc/server";
 import { EventEmitter } from "events";
 import superjson from "superjson";
 import { z } from "zod";
+import { clearAuthCookie } from "./authCookies";
+
+
 
 type User = {
   id: number;
@@ -94,14 +97,25 @@ const t = initTRPC.create({
   transformer: superjson,
 });
 
+type Context = {
+  user: TrpcUser | null;
+  req?: any;
+  res?: any;
+};
+
 const publicProcedure = t.procedure;
+
+
 export const incidentEvents = new EventEmitter();
 
-let currentUser: User | null = null;
+export type TrpcUser = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  role: User["role"];
+};
 
-export function setCurrentUser(user: User | null) {
-  currentUser = user;
-}
 
 const incidents: Incident[] = [
   {
@@ -228,7 +242,8 @@ function addIncident(input: {
   const { ownerId, ...incidentInput } = input;
   const incident: Incident = {
     id: incidents.length + 1,
-    reporterId: ownerId ?? currentUser?.id ?? 2,
+    reporterId: ownerId ?? 2,
+
     description: "",
     address: "",
     ...incidentInput,
@@ -331,37 +346,59 @@ function validateTeamMemberSlot(teamId: number, role: string) {
 
 export const appRouter = t.router({
   auth: t.router({
-    me: publicProcedure.query(() => currentUser),
-    logout: publicProcedure.mutation(() => {
-      currentUser = null;
+    me: publicProcedure.query(({ ctx }) => {
+      const user = (ctx as any)?.user;
+      if (!user) return null;
+
+      return {
+        id: user.id ?? user.userId,
+        name: user.name,
+        email: user.email,
+        phone: user.phone ?? "",
+        role: user.role,
+      };
+    }),
+
+
+    logout: publicProcedure.mutation(({ ctx }) => {
+      const requestContext = ctx as Context;
+      if (requestContext.req && requestContext.res) {
+        clearAuthCookie(requestContext.res, requestContext.req);
+      }
       return { ok: true };
     }),
+
   }),
+
   user: t.router({
     updateProfile: publicProcedure
-      .input(z.object({ name: z.string().min(1), email: z.string().email().optional(), phone: z.string().optional() }))
+      .input(
+        z.object({
+          name: z.string().min(1),
+          email: z.string().email().optional(),
+          phone: z.string().optional(),
+        }),
+      )
       .mutation(({ input }) => {
-        currentUser = {
-          ...(currentUser ?? {
-            id: 1,
-            email: "user@example.com",
-            role: "fire" as const,
-            phone: "",
-          }),
-          name: input.name,
-          email: input.email ?? currentUser?.email ?? "user@example.com",
-          phone: input.phone ?? "",
+        // Stateless demo router: no DB write here yet.
+        // For real app: update users table and return updated profile.
+        return {
+          ok: true,
+          profile: input,
         };
-        return currentUser;
       }),
   }),
+
   incidents: t.router({
     list: publicProcedure.input(limitInput).query(({ input }) => {
       return incidents.slice(0, input?.limit ?? incidents.length);
     }),
     myList: publicProcedure.input(ownedLimitInput).query(({ input }) => {
-      const userId = input?.ownerId ?? currentUser?.id;
+      // Stateless demo: requires ownerId since we don't persist per-request user in this demo.
+      // When you wire real DB, use ctx.user.id.
+      const userId = input?.ownerId ?? null;
       if (!userId) return [];
+
 
       return incidents
         .filter((incident) => incident.reporterId === userId)
@@ -409,6 +446,7 @@ export const appRouter = t.router({
     delete: publicProcedure
       .input(z.object({ incidentId: z.number().int(), ownerId: z.number().int().optional() }))
       .mutation(({ input }) => {
+
         const index = incidents.findIndex((item) => item.id === input.incidentId);
         if (index === -1) {
           throw new Error("Incident not found");
@@ -419,9 +457,10 @@ export const appRouter = t.router({
           throw new Error("Cannot delete active incident");
         }
 
-        const userOwnedRequest = currentUser?.role === "user" || (!currentUser && input.ownerId !== undefined);
+        const userOwnedRequest = input.ownerId !== undefined;
         if (userOwnedRequest) {
-          const userId = input.ownerId ?? currentUser?.id;
+          const userId = input.ownerId;
+
           if (!userId || incident.reporterId !== userId) {
             throw new TRPCError({ code: "FORBIDDEN", message: "You can only delete your own history reports." });
           }
@@ -602,8 +641,10 @@ export const appRouter = t.router({
   sosAlerts: t.router({
     getActive: publicProcedure.query(() => sosAlerts.filter((alert) => !["resolved", "fake"].includes(alert.status))),
     myActive: publicProcedure.input(ownedLimitInput).query(({ input }) => {
-      const userId = input?.ownerId ?? currentUser?.id;
+      // Demo router: requires ownerId since demo is stateless per request.
+      const userId = input?.ownerId ?? null;
       if (!userId) return [];
+
 
       return sosAlerts
         .filter((alert) => alert.userId === userId && !["resolved", "fake"].includes(alert.status))
@@ -630,12 +671,13 @@ export const appRouter = t.router({
       )
       .mutation(({ input }) => {
         const emergencyType = normalizeSosEmergencyType(input.emergencyType);
-        const userId = input.ownerId ?? currentUser?.id ?? 2;
+        const userId = input.ownerId ?? 2;
         const alert: SosAlert = {
           id: Date.now(),
           userId,
-          userName: currentUser?.name ?? "Jun",
-          userPhone: currentUser?.phone ?? "Not provided",
+          userName: "Jun",
+          userPhone: "Not provided",
+
           ...input,
           emergencyType,
           status: "pending",

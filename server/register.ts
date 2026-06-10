@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { ensureAuthSchema } from "./authSchema";
 import pool from "./db";
-import { setCurrentUser } from "./routers";
+
+
 
 const router = Router();
 const allowedRoles = ["admin", "fire", "medical", "pulis"] as const;
@@ -40,9 +41,19 @@ router.post("/register", async (req, res) => {
       role: account.role,
     };
 
-    setCurrentUser(user);
+    const { signAuthToken, setAuthCookie } = await import("./authCookies");
+    const token = signAuthToken({
+      userId: user.id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    });
+    setAuthCookie(res, req, token);
+
 
     return res.status(201).json({
+
       message: `${normalizedRole.charAt(0).toUpperCase()}${normalizedRole.slice(1)} registered successfully`,
       user,
     });
