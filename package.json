@@ -1,0 +1,11 @@
+{
+  "name": "fire-alert-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd server && npm run dev",
+    "dev:client": "cd client && corepack pnpm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "cd client && corepack pnpm run build && cd ../server && npm run build"
+  }
+}

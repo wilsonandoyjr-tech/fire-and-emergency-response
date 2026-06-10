@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fire Alert System</string>
+    <string name="title_activity_main">Fire Alert System</string>
+    <string name="package_name">com.firealert.system</string>
+    <string name="custom_url_scheme">com.firealert.system</string>
+</resources>

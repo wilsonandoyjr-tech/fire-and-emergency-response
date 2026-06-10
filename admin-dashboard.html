@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard | Fire Alert & Incident Management System</title>
+  <style>
+    :root {
+      --bg: #050a10;
+      --panel: #07111b;
+      --panel-2: #0a1723;
+      --line: rgba(160, 190, 220, 0.16);
+      --text: #f8fbff;
+      --muted: #aab7c4;
+      --orange: #ff6b16;
+      --orange-2: #9b3105;
+      --green: #20e05a;
+      --blue: #2388ff;
+      --red: #ff392d;
+      --amber: #ffae24;
+      --purple: #8d58ff;
+      --radius: 8px;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 72% 12%, rgba(255, 107, 22, 0.13), transparent 26%),
+        radial-gradient(circle at 20% 70%, rgba(35, 136, 255, 0.09), transparent 30%),
+        linear-gradient(135deg, #03070c 0%, #07111a 50%, #04080d 100%);
+    }
+
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 272px 1fr;
+    }
+
+    .sidebar {
+      padding: 22px 16px;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(8, 14, 22, 0.98), rgba(3, 8, 13, 0.98));
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 62px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .brand-mark {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #ffd0a8;
+      background:
+        radial-gradient(circle, #351006 0 38%, transparent 39%),
+        conic-gradient(from 25deg, #ff6b16, #6b1208, #ffbe3d, #b5160b, #ff6b16);
+      border: 2px solid #ff6b16;
+      box-shadow: 0 0 28px rgba(255, 79, 20, 0.3);
+      font-size: 1.6rem;
+    }
+
+    .brand span { color: var(--orange); }
+
+    .nav {
+      display: grid;
+      gap: 12px;
+    }
+
+    .nav button {
+      min-height: 56px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      color: var(--text);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 14px;
+      text-align: left;
+    }
+
+    .nav button.active {
+      border-color: rgba(255, 107, 22, 0.65);
+      background: linear-gradient(90deg, rgba(167, 54, 8, 0.62), rgba(255, 107, 22, 0.08));
+      box-shadow: inset 0 0 24px rgba(255, 107, 22, 0.15);
+    }
+
+    .nav i,
+    .icon {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    .sidebar-spacer { flex: 1; }
+
+    .help,
+    .user-card,
+    .panel,
+    .stat,
+    .topbar {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(11, 24, 36, 0.9), rgba(5, 13, 21, 0.95));
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+
+    .help {
+      padding: 18px;
+      text-align: center;
+    }
+
+    .help button {
+      width: 100%;
+      border: 1px solid rgba(255, 107, 22, 0.8);
+      border-radius: 7px;
+      color: #fff;
+      background: linear-gradient(180deg, #b63c0a, #7c2205);
+      padding: 11px;
+      font-size: 1.35rem;
+      font-weight: 900;
+    }
+
+    .help small { color: var(--muted); display: block; }
+    .help .orange { color: var(--orange); }
+
+    .user-card {
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #102032;
+      font-weight: 900;
+      background: linear-gradient(135deg, #d5efff, #7ab8f7);
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .avatar::after {
+      content: "";
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 2px solid #06111b;
+    }
+
+    .content {
+      min-width: 0;
+      padding: 14px 18px 18px;
+    }
+
+    .topbar {
+      min-height: 76px;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto auto;
+      align-items: center;
+      gap: 18px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .menu {
+      width: 46px;
+      height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 1.5rem;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2vw, 1.7rem);
+      letter-spacing: 0;
+    }
+
+    .title p,
+    small,
+    .muted {
+      color: var(--muted);
+    }
+
+    .date-card,
+    .notify {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(4, 10, 16, 0.42);
+    }
+
+    .date-card {
+      min-width: 174px;
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .notify {
+      width: 52px;
+      height: 52px;
+      position: relative;
+      color: var(--text);
+    }
+
+    .notify span {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: #ff5219;
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      font-weight: 900;
+    }
+
+    .top-user {
+      min-width: 210px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      min-height: 112px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .big-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      font-size: 1.75rem;
+      border: 1px solid currentColor;
+      box-shadow: inset 0 0 26px rgba(255,255,255,0.08), 0 0 26px currentColor;
+    }
+
+    .fire { color: var(--orange); background: rgba(255, 107, 22, 0.14); }
+    .danger { color: var(--red); background: rgba(255, 57, 45, 0.13); }
+    .blue { color: var(--blue); background: rgba(35, 136, 255, 0.13); }
+    .green { color: var(--green); background: rgba(32, 224, 90, 0.13); }
+    .purple { color: var(--purple); background: rgba(141, 88, 255, 0.13); }
+
+    .stat b {
+      display: block;
+      font-size: 2rem;
+      line-height: 1.1;
+    }
+
+    .up { color: var(--green); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.72fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .panel header {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      letter-spacing: 0;
+    }
+
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    .filters {
+      display: flex;
+      gap: 9px;
+      margin-left: auto;
+    }
+
+    select,
+    .filter-btn {
+      height: 38px;
+      min-width: 118px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: #07111b;
+      padding: 0 12px;
+    }
+
+    .map {
+      height: 385px;
+      margin: 12px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background:
+        linear-gradient(18deg, transparent 0 45%, rgba(255, 230, 168, 0.28) 46% 47%, transparent 48%),
+        linear-gradient(128deg, transparent 0 54%, rgba(255, 230, 168, 0.2) 55% 56%, transparent 57%),
+        linear-gradient(90deg, transparent 0 26%, rgba(20, 85, 130, 0.36) 27% 29%, transparent 30%),
+        repeating-linear-gradient(28deg, transparent 0 44px, rgba(143, 173, 199, 0.09) 45px 46px),
+        repeating-linear-gradient(117deg, transparent 0 58px, rgba(143, 173, 199, 0.08) 59px 60px),
+        #07111b;
+    }
+
+    .map::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent, rgba(0,0,0,0.45));
+      pointer-events: none;
+    }
+
+    .map-label {
+      position: absolute;
+      color: #dbe7f4;
+      font-size: 0.9rem;
+      text-shadow: 0 1px 4px #000;
+    }
+
+    .pin,
+    .unit {
+      position: absolute;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 9px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.42);
+      box-shadow: 0 0 18px currentColor;
+      font-weight: 900;
+    }
+
+    .unit {
+      min-width: 78px;
+      background: rgba(3, 10, 15, 0.82);
+      color: #f5fbff;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.36);
+      border-color: rgba(255,255,255,0.22);
+      font-size: 0.82rem;
+    }
+
+    .pin.fire-pin { background: #c93224; color: var(--red); }
+    .pin.medical-pin { background: #088b38; color: var(--green); }
+    .pin.police-pin { background: #0b65d8; color: var(--blue); }
+    .pin.hazard-pin { background: #ca6808; color: var(--amber); }
+
+    .map-tools {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      display: grid;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    .map-tools button,
+    .zoom button {
+      width: 54px;
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: rgba(3, 10, 15, 0.8);
+    }
+
+    .map-tools button.active {
+      border-color: var(--orange);
+      background: linear-gradient(180deg, rgba(170, 55, 10, 0.92), rgba(94, 26, 3, 0.86));
+    }
+
+    .legend,
+    .zoom {
+      position: absolute;
+      z-index: 2;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(3, 10, 15, 0.82);
+    }
+
+    .legend {
+      left: 14px;
+      bottom: 12px;
+      display: flex;
+      gap: 18px;
+      padding: 10px 13px;
+      font-size: 0.78rem;
+    }
+
+    .legend span::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      background: currentColor;
+    }
+
+    .zoom {
+      right: 14px;
+      bottom: 12px;
+      display: grid;
+    }
+
+    .zoom button { width: 40px; min-height: 38px; border-radius: 0; border-width: 0 0 1px; font-size: 1.25rem; }
+    .zoom button:last-child { border-bottom: 0; }
+
+    .report-list,
+    .unit-list,
+    .alert-list {
+      display: grid;
+      gap: 0;
+      padding: 12px;
+    }
+
+    .report,
+    .unit-row,
+    .alert-row {
+      min-height: 64px;
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .report:last-child,
+    .unit-row:last-child,
+    .alert-row:last-child { border-bottom: 0; }
+
+    .mini-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      font-size: 1.25rem;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .badge {
+      border-radius: 5px;
+      padding: 6px 9px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+    }
+
+    .pending { color: var(--amber); background: rgba(255, 174, 36, 0.12); }
+    .verified { color: var(--green); background: rgba(32, 224, 90, 0.12); }
+    .dispatched { color: #7bb2ff; background: rgba(35, 136, 255, 0.14); }
+    .high { color: #ff766d; background: rgba(255, 57, 45, 0.16); }
+    .medium { color: var(--amber); background: rgba(255, 174, 36, 0.14); }
+    .low { color: var(--green); background: rgba(32, 224, 90, 0.13); }
+
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: 0.8fr 1fr 0.78fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .donut-wrap {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 22px;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .donut {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: conic-gradient(var(--red) 0 35%, var(--green) 35% 60%, var(--blue) 60% 82%, var(--amber) 82% 94%, var(--purple) 94% 100%);
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    .donut::after {
+      content: "";
+      position: absolute;
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: #07111b;
+    }
+
+    .donut strong {
+      position: relative;
+      z-index: 1;
+      font-size: 1.8rem;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .chart {
+      height: 190px;
+      margin: 12px 18px 20px;
+      position: relative;
+      background:
+        repeating-linear-gradient(0deg, transparent 0 33px, rgba(160,190,220,0.1) 34px 35px),
+        repeating-linear-gradient(90deg, transparent 0 80px, rgba(160,190,220,0.06) 81px 82px);
+    }
+
+    .chart svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .team-overview {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .team-card {
+      min-height: 118px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.035);
+    }
+
+    .team-card b { font-size: 1.9rem; }
+
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 0.92fr 1fr 1.45fr;
+      gap: 14px;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .quick-actions button {
+      min-height: 72px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: rgba(255,255,255,0.035);
+      display: grid;
+      place-items: center;
+      gap: 4px;
+    }
+
+    .quick-actions i {
+      font-style: normal;
+      font-size: 1.45rem;
+    }
+
+    .view-all {
+      color: var(--orange);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1320px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .main-grid,
+      .dashboard-row,
+      .bottom-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 880px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 12px; }
+      .topbar { grid-template-columns: auto 1fr; }
+      .date-card, .notify, .top-user { display: none; }
+      .stats, .team-overview, .quick-actions { grid-template-columns: repeat(2, 1fr); }
+      .filters { display: none; }
+      .map { height: 330px; }
+      .donut-wrap { grid-template-columns: 1fr; justify-items: center; }
+    }
+
+    @media (max-width: 560px) {
+      .stats, .team-overview, .quick-actions { grid-template-columns: 1fr; }
+      .stat { grid-template-columns: 58px 1fr; }
+      .legend { flex-wrap: wrap; right: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">🔥</div>
+        <div>FIRE ALERT & INCIDENT<br><span>MANAGEMENT SYSTEM</span></div>
+      </div>
+
+      <nav class="nav" aria-label="Admin navigation">
+        <button class="active" type="button"><i>▦</i>Admin Dashboard</button>
+        <button type="button"><i>▤</i>Reports</button>
+        <button type="button"><i>◎</i>Live Map</button>
+        <button type="button"><i>▥</i>Analytics</button>
+        <button type="button"><i>♙</i>Users</button>
+        <button type="button"><i>⚙</i>Settings</button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="help">
+        <small>Need Emergency Help?</small>
+        <small>Contact Control Center</small>
+        <br>
+        <button type="button">☎ 911</button>
+        <small class="orange">Emergency Hotline</small>
+        <small class="orange">24/7 Available</small>
+      </div>
+
+      <div class="user-card">
+        <div class="avatar">AU</div>
+        <div style="flex:1">
+          <strong>Admin User</strong><br>
+          <small>Super Administrator</small>
+        </div>
+        <span>⌄</span>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <button class="menu" type="button">☰</button>
+        <div class="title">
+          <h1>ADMIN DASHBOARD</h1>
+          <p>Welcome back, Admin User</p>
+        </div>
+        <div class="date-card">
+          <span>▣</span>
+          <div><strong>May 20, 2025</strong><br><small>Tuesday</small></div>
+        </div>
+        <button class="notify" type="button">♧<span>12</span></button>
+        <div class="top-user">
+          <div class="avatar">AU</div>
+          <div><strong>Admin User</strong><br><small>Super Administrator</small></div>
+          <span>⌄</span>
+        </div>
+      </header>
+
+      <section class="stats" aria-label="Admin statistics">
+        <div class="stat"><div class="big-icon fire">▤</div><div><small>TOTAL REPORTS</small><b>128</b><small><span class="up">↑ 14%</span> from last month</small></div></div>
+        <div class="stat"><div class="big-icon danger">⚠</div><div><small>ACTIVE INCIDENTS</small><b>18</b><small><span class="up">↑ 8%</span> from yesterday</small></div></div>
+        <div class="stat"><div class="big-icon blue">♙</div><div><small>RESPONSE TEAMS</small><b>26</b><small><span class="up">↑ 3</span> more available</small></div></div>
+        <div class="stat"><div class="big-icon green">✓</div><div><small>RESOLVED CASES</small><b>84</b><small><span class="up">↑ 22%</span> from last month</small></div></div>
+        <div class="stat"><div class="big-icon purple">◷</div><div><small>AVG RESPONSE TIME</small><b>6.4 <small>mins</small></b><small><span class="up">↓ 10%</span> faster</small></div></div>
+      </section>
+
+      <section class="main-grid">
+        <div class="panel">
+          <header>
+            <h2><span class="live-dot"></span>LIVE INCIDENTS MAP</h2>
+            <div class="filters">
+              <select aria-label="Incident type"><option>All Types</option><option>Fire</option><option>Medical</option><option>Police</option><option>Hazard</option></select>
+              <select aria-label="Incident status"><option>All Status</option><option>Pending</option><option>Verified</option><option>Dispatched</option></select>
+              <button class="filter-btn" type="button">⚚ Filter</button>
+            </div>
+            <span>⛶</span>
+          </header>
+          <div class="map">
+            <div class="map-tools">
+              <button class="active" type="button">▰<br><small>Layers</small></button>
+              <button type="button">♨<br><small>Incidents</small></button>
+              <button type="button">🚓<br><small>Units</small></button>
+              <button type="button">H<br><small>Hospitals</small></button>
+            </div>
+            <span class="map-label" style="left:41%;top:8%">North District</span>
+            <span class="map-label" style="left:13%;top:38%">West Side</span>
+            <span class="map-label" style="left:46%;top:41%">Central City</span>
+            <span class="map-label" style="right:12%;top:41%">East District</span>
+            <span class="map-label" style="left:47%;bottom:8%">South Area</span>
+            <span class="pin fire-pin" style="left:37%;top:20%">🔥</span>
+            <span class="pin fire-pin" style="left:68%;top:62%">🔥</span>
+            <span class="pin fire-pin" style="right:16%;top:24%">🔥</span>
+            <span class="pin medical-pin" style="left:49%;top:70%">✚</span>
+            <span class="pin medical-pin" style="left:54%;top:7%">✚</span>
+            <span class="pin police-pin" style="left:23%;top:28%">🛡</span>
+            <span class="pin police-pin" style="right:17%;top:53%">🛡</span>
+            <span class="pin hazard-pin" style="left:26%;top:55%">⚠</span>
+            <span class="pin hazard-pin" style="right:23%;top:7%">⚠</span>
+            <span class="unit" style="left:34%;top:38%">🚒 Unit 2</span>
+            <span class="unit" style="left:57%;top:25%">🚑 Unit 2</span>
+            <span class="unit" style="right:23%;top:62%">🚓 Unit 5</span>
+            <div class="legend">
+              <span style="color:var(--red)">Fire</span>
+              <span style="color:var(--green)">Medical</span>
+              <span style="color:var(--blue)">Police</span>
+              <span style="color:var(--amber)">Hazard</span>
+            </div>
+            <div class="zoom"><button type="button">⌾</button><button type="button">＋</button><button type="button">−</button></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <header><h2>RECENT REPORTS</h2><span class="view-all">View All</span></header>
+          <div class="report-list">
+            <div class="report"><span class="mini-icon danger">🔥</span><div><strong>Structure Fire</strong><br><small>Downtown, 5th Avenue</small></div><div><small>10:20 AM</small><br><span class="badge pending">PENDING</span></div></div>
+            <div class="report"><span class="mini-icon green">🚑</span><div><strong>Road Traffic Accident</strong><br><small>Highway 45, KM 12</small></div><div><small>09:45 AM</small><br><span class="badge verified">VERIFIED</span></div></div>
+            <div class="report"><span class="mini-icon green">✚</span><div><strong>Medical Emergency</strong><br><small>City Hospital Area</small></div><div><small>09:30 AM</small><br><span class="badge dispatched">DISPATCHED</span></div></div>
+            <div class="report"><span class="mini-icon fire">⚠</span><div><strong>Gas Leak Report</strong><br><small>Industrial Zone, Block C</small></div><div><small>09:15 AM</small><br><span class="badge pending">PENDING</span></div></div>
+            <div class="report"><span class="mini-icon green">🛡</span><div><strong>Suspicious Activity</strong><br><small>Market Area, Sector 7</small></div><div><small>08:50 AM</small><br><span class="badge verified">VERIFIED</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-row">
+        <div class="panel">
+          <header><h2>INCIDENTS BY TYPE</h2></header>
+          <div class="donut-wrap">
+            <div class="donut"><strong>128<br><small>Total</small></strong></div>
+            <div>
+              <p><span style="color:var(--red)">●</span> Fire <strong style="float:right">45 (35%)</strong></p>
+              <p><span style="color:var(--green)">●</span> Medical <strong style="float:right">32 (25%)</strong></p>
+              <p><span style="color:var(--blue)">●</span> Police <strong style="float:right">28 (22%)</strong></p>
+              <p><span style="color:var(--amber)">●</span> Hazard <strong style="float:right">15 (12%)</strong></p>
+              <p><span style="color:var(--purple)">●</span> Others <strong style="float:right">8 (6%)</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <header><h2>INCIDENT TREND <small>(This Month)</small></h2></header>
+          <div class="chart">
+            <svg viewBox="0 0 520 180" role="img" aria-label="Incident trend line chart">
+              <polyline fill="none" stroke="#ff7a1a" stroke-width="4" points="18,122 42,100 66,70 88,82 110,64 132,128 160,104 184,102 214,82 244,58 268,54 304,100 328,118 354,76 380,50 410,104 444,78 478,48 500,22"/>
+              <g fill="#07111b" stroke="#ff7a1a" stroke-width="4">
+                <circle cx="18" cy="122" r="5"/><circle cx="42" cy="100" r="5"/><circle cx="66" cy="70" r="5"/><circle cx="88" cy="82" r="5"/><circle cx="110" cy="64" r="5"/><circle cx="132" cy="128" r="5"/><circle cx="160" cy="104" r="5"/><circle cx="184" cy="102" r="5"/><circle cx="214" cy="82" r="5"/><circle cx="244" cy="58" r="5"/><circle cx="268" cy="54" r="5"/><circle cx="304" cy="100" r="5"/><circle cx="328" cy="118" r="5"/><circle cx="354" cy="76" r="5"/><circle cx="380" cy="50" r="5"/><circle cx="410" cy="104" r="5"/><circle cx="444" cy="78" r="5"/><circle cx="478" cy="48" r="5"/><circle cx="500" cy="22" r="5"/>
+              </g>
+              <text x="486" y="12" fill="#fff" font-size="14" font-weight="800">38</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="panel">
+          <header><h2>ACTIVE UNITS</h2><span class="view-all">View All</span></header>
+          <div class="unit-list">
+            <div class="unit-row"><span class="mini-icon danger">🚒</span><div><strong>Fire Unit 3</strong><br><small class="up">● En Route</small></div><small>Central City</small></div>
+            <div class="unit-row"><span class="mini-icon green">🚑</span><div><strong>Medical Unit 2</strong><br><small class="up">● On Scene</small></div><small>City Hospital Area</small></div>
+            <div class="unit-row"><span class="mini-icon blue">🚓</span><div><strong>Police Unit 7</strong><br><small style="color:var(--blue)">● Patrolling</small></div><small>North District</small></div>
+            <div class="unit-row"><span class="mini-icon green">🚐</span><div><strong>Rescue Unit 5</strong><br><small style="color:var(--amber)">● On Scene</small></div><small>West Side</small></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bottom-row">
+        <div class="panel">
+          <header><h2>TEAM STATUS OVERVIEW</h2><span class="view-all">View All</span></header>
+          <div class="team-overview">
+            <div class="team-card"><span class="mini-icon green">♙</span><small>On Duty</small><b>16</b></div>
+            <div class="team-card"><span class="mini-icon fire">♙</span><small>On Scene</small><b>6</b></div>
+            <div class="team-card"><span class="mini-icon blue">🚑</span><small>En Route</small><b>4</b></div>
+            <div class="team-card"><span class="mini-icon purple">♙</span><small>Available</small><b>16</b></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <header><h2>SYSTEM ALERTS</h2><span class="view-all">View All</span></header>
+          <div class="alert-list">
+            <div class="alert-row"><span class="mini-icon danger">⚠</span><div><strong>High Wind Warning</strong><br><small>North District</small></div><span class="badge high">HIGH</span></div>
+            <div class="alert-row"><span class="mini-icon">☔</span><div><strong>Heavy Rainfall</strong><br><small>Central City</small></div><span class="badge medium">MEDIUM</span></div>
+            <div class="alert-row"><span class="mini-icon">🚗</span><div><strong>Traffic Congestion</strong><br><small>West Side</small></div><span class="badge low">LOW</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <header><h2>QUICK ACTIONS</h2></header>
+          <div class="quick-actions">
+            <button type="button"><i>▤</i><small>Create Report</small></button>
+            <button type="button"><i>🚑</i><small>Dispatch Team</small></button>
+            <button type="button"><i>📣</i><small>Broadcast Alert</small></button>
+            <button type="button"><i>♙+</i><small>Add User</small></button>
+            <button type="button"><i>▧</i><small>Generate Report</small></button>
+            <button type="button"><i>⚙</i><small>System Settings</small></button>
+            <button type="button"><i>▥</i><small>View Analytics</small></button>
+            <button type="button"><i>☎</i><small>Emergency Contacts</small></button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

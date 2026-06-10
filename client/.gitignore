@@ -1,0 +1,34 @@
+.env
+*.env
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.manus-logs/
+
+# Local caches
+.vite/
+.turbo/
+.cache/
+
+# Capacitor / Android generated output
+android/**/build/
+android/.gradle/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
